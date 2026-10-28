@@ -13,6 +13,8 @@ pode auditar o histórico de um lote e verificar que ele não foi adulterado.
 
 > Este documento é uma visão geral da aplicação inteira (back + front). O repositório do frontend está no link apontado no formulário de entrega.
 > Substitua as duas URLs acima pelas URLs públicas depois do deploy. O deploy do backend é obrigatório pelo brief e precisa estar acessível para o avaliador.
+>
+> **Avaliador: comece por [`HOW_TO_TEST.md`](./HOW_TO_TEST.md)** — é o roteiro de 10 minutos para validar cada requisito do PDF.
 
 ---
 
@@ -63,6 +65,9 @@ um `ended` com vencedor e recibo. Dá para percorrer o fluxo inteiro sem configu
 ---
 
 ## Fluxo recomendado para avaliação (10 min)
+
+> O passo a passo completo (com comandos SQL para o teste de adulteração e checklist por requisito do PDF) está em [`HOW_TO_TEST.md`](./HOW_TO_TEST.md). O resumo abaixo é um atalho.
+
 
 1. **Vitrine pública** — abra `/` e navegue nas abas (ao vivo, agendados, encerrados). Note que lotes cancelados não aparecem.
 2. **Sala do lote ao vivo** — entre no lote `live` seedado. Veja o lance atual, histórico anônimo, countdown.
