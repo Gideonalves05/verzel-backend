@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: verzel
+      POSTGRES_PASSWORD: verzel
+      POSTGRES_DB: verzel
+    ports:
+      - "5432:5432"
+    volumes:
+      - verzel-pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U verzel -d verzel"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build:
+      context: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://verzel:verzel@postgres:5432/verzel?schema=public
+      JWT_SECRET: dev-secret-change-me-change-me-change-me-xxxxxxxx
+      AUDIT_SIGNING_KEY: dev-audit-key-change-me-change-me-change-me-yyyy
+      MET_API_BASE_URL: https://collectionapi.metmuseum.org/public/collection/v1
+      MET_API_TIMEOUT_MS: 5000
+      PORT: 3001
+      CORS_ORIGIN: http://localhost:3000
+    ports:
+      - "3001:3001"
+
+volumes:
+  verzel-pg-data:
