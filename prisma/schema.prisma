@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  auctioneer
+  bidder
+}
+
+enum LotStatus {
+  scheduled
+  live
+  ended
+  cancelled
+}
+
+enum WalletLedgerKind {
+  deposit
+  commit
+  release
+  debit
+  credit
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  role          UserRole
+  handle        String   @unique
+  createdAt     DateTime @default(now())
+
+  wallet        Wallet?
+  lots          Lot[]           @relation("AuctioneerLots")
+  bids          Bid[]
+  ledgerEntries WalletLedgerEntry[]
+  wonSettlements   Settlement[] @relation("SettlementWinner")
+  earnedSettlements Settlement[] @relation("SettlementAuctioneer")
+}
+
+model Wallet {
+  id                   String   @id @default(uuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balanceTotalCents    BigInt   @default(0)
+  balanceCommittedCents BigInt  @default(0)
+  updatedAt            DateTime @updatedAt
+}
+
+model WalletLedgerEntry {
+  id         String             @id @default(uuid())
+  userId     String
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind       WalletLedgerKind
+  amountCents BigInt
+  lotId      String?
+  bidId      String?
+  createdAt  DateTime           @default(now())
+
+  @@index([userId])
+  @@index([lotId])
+}
+
+model ExternalItem {
+  id                String   @id @default(uuid())
+  provider          String   // "met"
+  externalId        String
+  title             String
+  primaryImageUrl   String?
+  thumbnailUrl      String?
+  culture           String?
+  objectDate        String?
+  medium            String?
+  rawJson           Json
+  fetchedAt         DateTime @default(now())
+
+  lots              Lot[]
+
+  @@unique([provider, externalId])
+}
+
+model Lot {
+  id                     String    @id @default(uuid())
+  auctioneerId           String
+  auctioneer             User      @relation("AuctioneerLots", fields: [auctioneerId], references: [id])
+  externalItemId         String
+  externalItem           ExternalItem @relation(fields: [externalItemId], references: [id])
+
+  title                  String
+  startsAt               DateTime
+  endsAt                 DateTime
+  originalEndsAt         DateTime
+  startingBidCents       BigInt
+  minIncrementCents      BigInt
+
+  status                 LotStatus @default(scheduled)
+  currentBidAmountCents  BigInt?
+  currentLeaderUserId    String?
+  bidCount               Int       @default(0)
+  settledAt              DateTime?
+  cancelledAt            DateTime?
+
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  bids                   Bid[]
+  seals                  AuditSeal[]
+  settlement             Settlement?
+
+  @@index([status, endsAt])
+  @@index([auctioneerId])
+}
+
+model Bid {
+  id            String   @id @default(uuid())
+  lotId         String
+  lot           Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  bidderId      String
+  bidder        User     @relation(fields: [bidderId], references: [id])
+  seq           Int
+  amountCents   BigInt
+  handle        String   // per-lot anonymized handle
+  placedAt      DateTime @default(now())
+  prevHash      String
+  currHash      String
+
+  @@unique([lotId, seq])
+  @@index([lotId, placedAt])
+}
+
+model AuditSeal {
+  id              String   @id @default(uuid())
+  lotId           String
+  lot             Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  seq             Int
+  chainHeadHash   String
+  createdAt       DateTime @default(now())
+  keyId           String   @default("primary")
+  hmac            String
+  final           Boolean  @default(false)
+
+  @@index([lotId, seq])
+}
+
+model Settlement {
+  id                 String    @id @default(uuid())
+  lotId              String    @unique
+  lot                Lot       @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  winnerUserId       String?
+  winner             User?     @relation("SettlementWinner", fields: [winnerUserId], references: [id])
+  auctioneerUserId   String
+  auctioneer         User      @relation("SettlementAuctioneer", fields: [auctioneerUserId], references: [id])
+  amountCents        BigInt    @default(0)
+  settledAt          DateTime  @default(now())
+
+  receipt            Receipt?
+}
+
+model Receipt {
+  id            String     @id @default(uuid())
+  settlementId  String     @unique
+  settlement    Settlement @relation(fields: [settlementId], references: [id], onDelete: Cascade)
+  shareToken    String     @unique @default(uuid())
+  createdAt     DateTime   @default(now())
+}
