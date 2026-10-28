@@ -35,7 +35,7 @@ npm run start:dev            # http://localhost:3001 (API) e /api/docs (Swagger)
 
 ```bash
 # 2. Frontend (clonar o repo separado, outra aba)
-git clone <url-do-repo-frontend> verzel-app && cd verzel-app
+git clone https://github.com/Gideonalves05/verzel-app.git && cd verzel-app
 cp .env.example .env.local   # NEXT_PUBLIC_API_BASE_URL=http://localhost:3001/api
 npm install
 npm run dev                  # http://localhost:3000
@@ -164,8 +164,8 @@ e as mensagens em português para o licitante — reescritas com as palavras exa
 
 ## Repositórios
 
-- **Backend** (este repo): `<URL deste repo no GitHub>`
-- **Frontend**: `<URL do repo do frontend no GitHub>`
+- **Backend** (este repo): https://github.com/Gideonalves05/verzel-backend
+- **Frontend**: https://github.com/Gideonalves05/verzel-app
 
 Ambos os links vão no formulário de entrega.
 
